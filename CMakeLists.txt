@@ -43,3 +43,5 @@ set(PROJ_SRC main.cpp)
 add_executable(lidarDataManager
     ${PROJ_SRC}
 )
+
+target_link_libraries(lidarDataManager StereoVision::stevi)

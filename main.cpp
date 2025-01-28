@@ -4,6 +4,10 @@
 
 #include <tclap/CmdLine.h>
 
+#include <StereoVision/io/pointcloud_io.h>
+#include <StereoVision/io/las_pointcloud_io.h>
+#include <StereoVision/io/pcd_pointcloud_io.h>
+
 int main(int argc, char** argv) {
 
     const char* message = "Processed lidar data on the fly";
@@ -11,6 +15,23 @@ int main(int argc, char** argv) {
     const char* version = "0.1";
 
     std::string inFile;
+
+    std::string inCrs = "";
+    std::string outCrs = "";
+
+    std::string roi = "";
+
+    double density = std::numeric_limits<double>::infinity();
+    int number = -1;
+
+    int returnCap = -1;
+    int lineIdx = -1;
+
+    std::string outFormat = "";
+
+    bool removeColor = false;
+    bool removeAllAttributes = false;
+    std::vector<std::string> attributes2filter;
 
     try {
 
@@ -68,11 +89,118 @@ int main(int argc, char** argv) {
 
         cmd.parse(argc, argv);
 
+        inFile = inputFileArg.getValue();
+
+        if (inCrsArg.isSet() and outCrsArg.isSet()) {
+            std::string inCrs = inCrsArg.getValue();
+            std::string outCrs = outCrsArg.getValue();
+        }
+
+        if (roiArg.isSet()) {
+            roi = roiArg.getValue();
+        }
+
+        density = densityArg.getValue();
+        number = numberArg.getValue();
+        returnCap = returnCapArg.getValue();
+        lineIdx = lineArg.getValue();
+
+        outFormat = formatArg.getValue();
+
+        removeColor = removeColorArg.isSet();
+        removeAllAttributes = removeAllAttributesArg.isSet();
+
+        attributes2filter = removeAttributeArg.getValue();
+
     } catch (TCLAP::ArgException &e) {
 
         std::cerr << "Command line error: " << e.error() << " for argument " << e.argId() << std::endl;
+        return 1;
 
     }
 
+    //Open file
+    auto pointCloudStackOpt = StereoVision::IO::openPointCloud(inFile);
+
+    if (!pointCloudStackOpt.has_value()) {
+        std::cerr << "Could not open file: " << inFile << "! Aborting!" << std::endl;
+        return 1;
+    }
+
+    StereoVision::IO::FullPointCloudAccessInterface& pointCloudStack = pointCloudStackOpt.value();
+
+    if (pointCloudStack.headerAccess == nullptr and pointCloudStack.pointAccess == nullptr) {
+        std::cerr << "Error reading file: " << inFile << ", null accesss interfaces! Aborting!" << std::endl;
+        return 1;
+    }
+
+    //process stack
+    if (!roi.empty()) {
+        std::cerr << "Region of interest filtering not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (!outCrs.empty()) {
+        std::cerr << "CRS conversion not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (density > 0 and density < std::numeric_limits<double>::infinity()) {
+        std::cerr << "Density based filtering not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (number > 0) {
+        std::cerr << "Number based filtering not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (returnCap > 0) {
+        std::cerr << "Return number capping not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (lineIdx >= 0) {
+        std::cerr << "Line based filtering not implemented yet, ignoring argument" << std::endl;
+    }
+
+    if (removeAllAttributes) {
+        std::cerr << "All attributed removal not implemented yet, ignoring argument" << std::endl;
+    } else {
+
+        if (!attributes2filter.empty()) {
+            std::cerr << "Filtering out attributes not implemented yet, ignoring argument" << std::endl;
+        }
+
+        if (removeColor) {
+            std::cerr << "Removing color not implemented yet, ignoring argument" << std::endl;
+        }
+    }
+
+    //write file
+
+    if (outFormat == "lasv13" or outFormat == "lasv12") {
+        std::cerr << "Older LAS version unsupported yet" << std::endl;
+        return 1;
+    } else if (outFormat == "lasv14") {
+        bool ok = StereoVision::IO::writePointCloudLas(std::cout, pointCloudStack);
+
+        if (!ok) {
+            std::cerr << "Error writing point cloud data to stdout!" << std::endl;
+            return 1;
+        }
+    } else if (outFormat == "pcd-ascii" or outFormat == "pcd-bin") {
+
+        StereoVision::IO::PcdDataStorageType dataStorageType = StereoVision::IO::PcdDataStorageType::ascii;
+
+        if (outFormat == "pcd-bin") {
+            dataStorageType = StereoVision::IO::PcdDataStorageType::binary;
+        }
+
+        bool ok = StereoVision::IO::writePointCloudPcd(std::cout, pointCloudStack, dataStorageType);
+
+        if (!ok) {
+            std::cerr << "Error writing point cloud data to stdout!" << std::endl;
+            return 1;
+        }
+    }
+
+
+    return 0;
 
 }
