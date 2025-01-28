@@ -8,6 +8,9 @@
 #include <StereoVision/io/las_pointcloud_io.h>
 #include <StereoVision/io/pcd_pointcloud_io.h>
 
+#include "processingBlocks/aliasheaderattributes.h"
+#include "processingBlocks/crsconversion.h"
+
 int main(int argc, char** argv) {
 
     const char* message = "Processed lidar data on the fly";
@@ -135,12 +138,10 @@ int main(int argc, char** argv) {
     }
 
     //process stack
+
+    //do the filtering first
     if (!roi.empty()) {
         std::cerr << "Region of interest filtering not implemented yet, ignoring argument" << std::endl;
-    }
-
-    if (!outCrs.empty()) {
-        std::cerr << "CRS conversion not implemented yet, ignoring argument" << std::endl;
     }
 
     if (density > 0 and density < std::numeric_limits<double>::infinity()) {
@@ -159,6 +160,7 @@ int main(int argc, char** argv) {
         std::cerr << "Line based filtering not implemented yet, ignoring argument" << std::endl;
     }
 
+    //then processing
     if (removeAllAttributes) {
         std::cerr << "All attributed removal not implemented yet, ignoring argument" << std::endl;
     } else {
@@ -170,6 +172,42 @@ int main(int argc, char** argv) {
         if (removeColor) {
             std::cerr << "Removing color not implemented yet, ignoring argument" << std::endl;
         }
+    }
+
+    //crs conversion
+    if (!outCrs.empty()) {
+        std::string inCrsVal;
+
+        std::optional<StereoVision::IO::PointCloudGenericAttribute> inCrsAttr =
+                pointCloudStack.headerAccess->getAttributeByName("crs");
+
+        if (inCrsAttr.has_value()) {
+            inCrsVal = StereoVision::IO::castedPointCloudAttribute<std::string>(inCrsAttr.value());
+        } else {
+            inCrsVal = inCrs;
+        }
+
+        if (inCrsVal.empty()) {
+            std::cerr << "Could not get input crs info, crs conversion error!";
+            return 1;
+        }
+
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> crsConvertor =
+                CrsConversion::setupCrsConversion(pointCloudStack.pointAccess,
+                                                  inCrs,
+                                                  outCrs);
+
+        if (crsConvertor == nullptr) {
+            std::cerr << "Error building crs converter, crs conversion error!";
+            return 1;
+        }
+
+        AliasHeaderAttributes::AliasMap headerAlias;
+        headerAlias["crs"] = outCrs;
+
+        pointCloudStack.headerAccess = std::make_unique<AliasHeaderAttributes>(std::move(pointCloudStack.headerAccess), headerAlias);
+        pointCloudStack.pointAccess = std::move(crsConvertor);
+
     }
 
     //write file

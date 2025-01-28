@@ -38,10 +38,14 @@ pkg_check_modules(PROJ REQUIRED IMPORTED_TARGET proj)
 add_library(PROJ::proj ALIAS PkgConfig::PROJ)
 
 #configure executable
-set(PROJ_SRC main.cpp)
+set(PROJ_SRC main.cpp
+    processingBlocks/aliasheaderattributes.h
+    processingBlocks/aliasheaderattributes.cpp
+    processingBlocks/crsconversion.h
+    processingBlocks/crsconversion.cpp)
 
 add_executable(lidarDataManager
     ${PROJ_SRC}
 )
 
-target_link_libraries(lidarDataManager StereoVision::stevi)
+target_link_libraries(lidarDataManager StereoVision::stevi PROJ::proj)
