@@ -42,7 +42,9 @@ set(PROJ_SRC main.cpp
     processingBlocks/aliasheaderattributes.h
     processingBlocks/aliasheaderattributes.cpp
     processingBlocks/crsconversion.h
-    processingBlocks/crsconversion.cpp)
+    processingBlocks/crsconversion.cpp
+    processingBlocks/pointsattributesfilters.h
+    processingBlocks/pointsattributesfilters.cpp)
 
 add_executable(lidarDataManager
     ${PROJ_SRC}

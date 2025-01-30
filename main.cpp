@@ -9,6 +9,7 @@
 #include <StereoVision/io/pcd_pointcloud_io.h>
 
 #include "processingBlocks/aliasheaderattributes.h"
+#include "processingBlocks/pointsattributesfilters.h"
 #include "processingBlocks/crsconversion.h"
 
 int main(int argc, char** argv) {
@@ -161,17 +162,15 @@ int main(int argc, char** argv) {
     }
 
     //then processing
-    if (removeAllAttributes) {
-        std::cerr << "All attributed removal not implemented yet, ignoring argument" << std::endl;
-    } else {
 
-        if (!attributes2filter.empty()) {
-            std::cerr << "Filtering out attributes not implemented yet, ignoring argument" << std::endl;
-        }
+    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> attributesFilter =
+            PointsAttributesFilters::setupPointAttributeFiltering(pointCloudStack.pointAccess,
+                                                                  removeColor,
+                                                                  attributes2filter,
+                                                                  removeAllAttributes);
 
-        if (removeColor) {
-            std::cerr << "Removing color not implemented yet, ignoring argument" << std::endl;
-        }
+    if (attributesFilter != nullptr) {
+        pointCloudStack.pointAccess = std::move(attributesFilter);
     }
 
     //crs conversion
