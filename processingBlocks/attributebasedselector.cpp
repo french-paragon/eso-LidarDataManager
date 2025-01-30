@@ -1,0 +1,187 @@
+#include "attributebasedselector.h"
+
+#include <type_traits>
+
+#include <StereoVision/utils/types_manipulations.h>
+
+template<bool cond>
+struct ConditionalRef {
+
+    template<typename Ttrue, typename Tfalse>
+    static Ttrue& val(Ttrue & t, Tfalse & f) { return t; }
+
+    template<typename Ttrue, typename Tfalse>
+    static Ttrue const& val(Ttrue const& t, Tfalse const& f) { return t; }
+};
+
+template<>
+struct ConditionalRef<false> {
+
+    template<typename Ttrue, typename Tfalse>
+    static Tfalse& val(Ttrue & t, Tfalse & f) { return f; }
+
+    template<typename Ttrue, typename Tfalse>
+    static Tfalse const& val(Ttrue const& t, Tfalse const& f) { return f; }
+};
+
+template<AttributeBasedSelector::Comparator comparator>
+class AttributeBasedSelectorImpl : public AttributeBasedSelector
+{
+public:
+    AttributeBasedSelectorImpl(std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> && source,
+                               std::string const& attributeName,
+                               StereoVision::IO::PointCloudGenericAttribute const& val) :
+        AttributeBasedSelector(std::move(source), attributeName, val)
+    {
+
+    }
+
+    template<typename T>
+    bool gotoNextImpl(T const& val) {
+
+        if (!std::is_arithmetic_v<T> and !std::is_same_v<T, std::string>) {
+            return false;
+        }
+
+        bool nextIsIn = false;
+        bool sourceHasNotEnded = false;
+
+        do {
+            sourceHasNotEnded = _src->gotoNext();
+
+            if (!sourceHasNotEnded) {
+                break;
+            }
+
+            std::optional<StereoVision::IO::PointCloudGenericAttribute> attributeOpt =
+                    getAttributeByName(_attributeName.c_str());
+
+            if (comparator == Comparator::Different and !attributeOpt.has_value()) {
+                nextIsIn = true;
+                break;
+            }
+
+            if (!attributeOpt.has_value()) {
+                continue;
+            }
+
+            StereoVision::IO::PointCloudGenericAttribute& attribute = attributeOpt.value();
+
+            using CompT = std::conditional_t<std::is_arithmetic_v<T>, double, std::string>; //ensure the comparison type is a type that can holds all possible alternatives
+
+            CompT attributeVal;
+            CompT comparisonVal;
+
+            if (std::holds_alternative<CompT>(attribute)) {
+                attributeVal = std::get<CompT>(attribute);
+            } else {
+                attributeVal = StereoVision::IO::castedPointCloudAttribute<CompT>(attribute);
+            }
+
+            comparisonVal = ConditionalRef<std::is_arithmetic_v<T> or std::is_same_v<T, std::string>>::val(val,CompT());
+
+            if (comparator == Comparator::Equal) {
+                if (attributeVal == comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+            if (comparator == Comparator::Different) {
+                if (attributeVal != comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+            if (comparator == Comparator::Greather) {
+                if (attributeVal > comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+            if (comparator == Comparator::GreatherOrEqual) {
+                if (attributeVal >= comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+            if (comparator == Comparator::Smaller) {
+                if (attributeVal < comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+            if (comparator == Comparator::SmallerOrEqual) {
+                if (attributeVal <= comparisonVal) {
+                    nextIsIn = true;
+                }
+            }
+
+        } while (!nextIsIn);
+
+        return sourceHasNotEnded;
+    }
+
+    virtual bool gotoNext() override {
+        return std::visit([this] (auto const& param) { return gotoNextImpl(param); }, _comparisonVal);
+    }
+};
+
+std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> AttributeBasedSelector::setupAttributeBasedSelector(
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> & source,
+        std::string const& attributeName,
+        Comparator comparator,
+        StereoVision::IO::PointCloudGenericAttribute const& val) {
+
+    if (source == nullptr) {
+        return nullptr;
+    }
+
+    if(!std::visit([] (auto const& val) {
+                   using T = std::decay_t<decltype (val)>;
+                   return std::is_arithmetic_v<T> or
+                   std::is_same_v<T, std::string>;}, val)) {
+        return nullptr;
+    }
+
+    if (attributeName.empty()) {
+        return nullptr;
+    }
+
+    StereoVision::IO::PointCloudPointAccessInterface* ret = nullptr;
+
+    switch (comparator) {
+    case Equal:
+        ret = new AttributeBasedSelectorImpl<Equal>(std::move(source), attributeName, val);
+        break;
+    case Different:
+        ret = new AttributeBasedSelectorImpl<Different>(std::move(source), attributeName, val);
+        break;
+    case Greather:
+        ret = new AttributeBasedSelectorImpl<Greather>(std::move(source), attributeName, val);
+        break;
+    case GreatherOrEqual:
+        ret = new AttributeBasedSelectorImpl<GreatherOrEqual>(std::move(source), attributeName, val);
+        break;
+    case Smaller:
+        ret = new AttributeBasedSelectorImpl<Smaller>(std::move(source), attributeName, val);
+        break;
+    case SmallerOrEqual:
+        ret = new AttributeBasedSelectorImpl<SmallerOrEqual>(std::move(source), attributeName, val);
+        break;
+    default:
+        break;
+    }
+
+    return std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface>(ret);
+
+}
+
+AttributeBasedSelector::AttributeBasedSelector(std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> && source,
+                                               std::string const& attributeName,
+                                               StereoVision::IO::PointCloudGenericAttribute const& val) :
+    IdentityProcessor(std::move(source)),
+    _attributeName(attributeName),
+    _comparisonVal(val)
+{
+
+}

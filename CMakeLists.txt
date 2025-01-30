@@ -48,7 +48,9 @@ set(PROJ_SRC main.cpp
     processingBlocks/pointsattributesfilters.h
     processingBlocks/pointsattributesfilters.cpp
     processingBlocks/regionofinterestselector.h
-    processingBlocks/regionofinterestselector.cpp)
+    processingBlocks/regionofinterestselector.cpp
+    processingBlocks/attributebasedselector.h
+    processingBlocks/attributebasedselector.cpp)
 
 add_executable(lidarDataManager
     ${PROJ_SRC}

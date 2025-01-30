@@ -10,6 +10,7 @@
 
 #include "processingBlocks/aliasheaderattributes.h"
 #include "processingBlocks/regionofinterestselector.h"
+#include "processingBlocks/attributebasedselector.h"
 #include "processingBlocks/pointsattributesfilters.h"
 #include "processingBlocks/crsconversion.h"
 
@@ -141,7 +142,7 @@ int main(int argc, char** argv) {
 
     //process stack
 
-    //do the filtering first
+    //do the filtering first (so that the points are removed)
 
     //region of interest
     std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> roiSelector =
@@ -152,7 +153,15 @@ int main(int argc, char** argv) {
     }
 
     if (density > 0 and density < std::numeric_limits<double>::infinity()) {
-        std::cerr << "Density based filtering not implemented yet, ignoring argument" << std::endl;
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> densitySelector =
+                AttributeBasedSelector::setupAttributeBasedSelector(pointCloudStack.pointAccess,
+                                                                    "densityFilterAttr",
+                                                                    AttributeBasedSelector::SmallerOrEqual,
+                                                                    density);
+
+        if (densitySelector != nullptr) {
+            pointCloudStack.pointAccess = std::move(densitySelector);
+        }
     }
 
     if (number > 0) {
@@ -160,14 +169,32 @@ int main(int argc, char** argv) {
     }
 
     if (returnCap > 0) {
-        std::cerr << "Return number capping not implemented yet, ignoring argument" << std::endl;
+
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> returnNumberSelector =
+                AttributeBasedSelector::setupAttributeBasedSelector(pointCloudStack.pointAccess,
+                                                                    "returnNumber",
+                                                                    AttributeBasedSelector::SmallerOrEqual,
+                                                                    returnCap);
+
+        if (returnNumberSelector != nullptr) {
+            pointCloudStack.pointAccess = std::move(returnNumberSelector);
+        }
     }
 
     if (lineIdx >= 0) {
-        std::cerr << "Line based filtering not implemented yet, ignoring argument" << std::endl;
+
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> lineSelector =
+                AttributeBasedSelector::setupAttributeBasedSelector(pointCloudStack.pointAccess,
+                                                                    "lineNumber",
+                                                                    AttributeBasedSelector::Equal,
+                                                                    lineIdx);
+
+        if (lineSelector != nullptr) {
+            pointCloudStack.pointAccess = std::move(lineSelector);
+        }
     }
 
-    //then processing
+    //then processing (only on the leftover points).
 
     std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> attributesFilter =
             PointsAttributesFilters::setupPointAttributeFiltering(pointCloudStack.pointAccess,
