@@ -7,7 +7,9 @@
 
 #include <StereoVision/io/pointcloud_io.h>
 
-class PointsAttributesFilters : public StereoVision::IO::PointCloudPointAccessInterface
+#include "./identityprocessor.h"
+
+class PointsAttributesFilters : public IdentityProcessor
 {
 public:
 
@@ -27,7 +29,6 @@ public:
 
     ~PointsAttributesFilters();
 
-    virtual StereoVision::IO::PtGeometry<StereoVision::IO::PointCloudGenericAttribute> getPointPosition() const override;
     virtual std::optional<StereoVision::IO::PtColor<StereoVision::IO::PointCloudGenericAttribute>> getPointColor() const override;
 
     virtual std::optional<StereoVision::IO::PointCloudGenericAttribute> getAttributeById(int id) const override;
@@ -45,8 +46,6 @@ protected:
                             bool removeAll);
 
     void recomputeAttributes();
-
-    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> _src;
 
     std::set<std::string> _filtered;
     const bool _filterColor;

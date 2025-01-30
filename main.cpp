@@ -9,6 +9,7 @@
 #include <StereoVision/io/pcd_pointcloud_io.h>
 
 #include "processingBlocks/aliasheaderattributes.h"
+#include "processingBlocks/regionofinterestselector.h"
 #include "processingBlocks/pointsattributesfilters.h"
 #include "processingBlocks/crsconversion.h"
 
@@ -141,8 +142,13 @@ int main(int argc, char** argv) {
     //process stack
 
     //do the filtering first
-    if (!roi.empty()) {
-        std::cerr << "Region of interest filtering not implemented yet, ignoring argument" << std::endl;
+
+    //region of interest
+    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> roiSelector =
+        RegionOfInterestSelector::setupRoiSelection(pointCloudStack.pointAccess, roi);
+
+    if (roiSelector != nullptr) {
+        pointCloudStack.pointAccess = std::move(roiSelector);
     }
 
     if (density > 0 and density < std::numeric_limits<double>::infinity()) {

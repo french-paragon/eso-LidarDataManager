@@ -41,10 +41,14 @@ add_library(PROJ::proj ALIAS PkgConfig::PROJ)
 set(PROJ_SRC main.cpp
     processingBlocks/aliasheaderattributes.h
     processingBlocks/aliasheaderattributes.cpp
+    processingBlocks/identityprocessor.h
+    processingBlocks/identityprocessor.cpp
     processingBlocks/crsconversion.h
     processingBlocks/crsconversion.cpp
     processingBlocks/pointsattributesfilters.h
-    processingBlocks/pointsattributesfilters.cpp)
+    processingBlocks/pointsattributesfilters.cpp
+    processingBlocks/regionofinterestselector.h
+    processingBlocks/regionofinterestselector.cpp)
 
 add_executable(lidarDataManager
     ${PROJ_SRC}

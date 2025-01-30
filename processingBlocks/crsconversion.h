@@ -6,10 +6,12 @@
 
 #include <StereoVision/io/pointcloud_io.h>
 
+#include "identityprocessor.h"
+
 struct pj_ctx;
 struct PJconsts;
 
-class CrsConversion : public StereoVision::IO::PointCloudPointAccessInterface
+class CrsConversion : public IdentityProcessor
 {
 public:
 
@@ -28,12 +30,6 @@ public:
     ~CrsConversion();
 
     virtual StereoVision::IO::PtGeometry<StereoVision::IO::PointCloudGenericAttribute> getPointPosition() const override;
-    virtual std::optional<StereoVision::IO::PtColor<StereoVision::IO::PointCloudGenericAttribute>> getPointColor() const override;
-
-    virtual std::optional<StereoVision::IO::PointCloudGenericAttribute> getAttributeById(int id) const override;
-    virtual std::optional<StereoVision::IO::PointCloudGenericAttribute> getAttributeByName(const char* attributeName) const override;
-
-    virtual std::vector<std::string> attributeList() const override;
 
     virtual bool gotoNext() override;
 
@@ -50,8 +46,6 @@ protected:
 
     pj_ctx* _proj_ctx;
     PJconsts* _transform;
-
-    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> _src;
 
     StereoVision::IO::PtGeometry<double> _currentTransformedPosition;
 

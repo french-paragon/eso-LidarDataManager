@@ -41,7 +41,7 @@ std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> CrsConversion:
 CrsConversion::CrsConversion(std::unique_ptr<PointCloudPointAccessInterface> && source,
                              pj_ctx* projContext,
                              PJconsts* projTransform) :
-    _src(std::move(source)),
+    IdentityProcessor(std::move(source)),
     _proj_ctx(projContext),
     _transform(projTransform)
 {
@@ -62,21 +62,6 @@ StereoVision::IO::PtGeometry<StereoVision::IO::PointCloudGenericAttribute> CrsCo
 
     return ret;
 }
-std::optional<StereoVision::IO::PtColor<StereoVision::IO::PointCloudGenericAttribute>> CrsConversion::getPointColor() const {
-    return _src->getPointColor();
-}
-
-std::optional<StereoVision::IO::PointCloudGenericAttribute> CrsConversion::getAttributeById(int id) const {
-    return _src->getAttributeById(id);
-}
-std::optional<StereoVision::IO::PointCloudGenericAttribute> CrsConversion::getAttributeByName(const char* attributeName) const {
-    return _src->getAttributeByName(attributeName);
-}
-
-std::vector<std::string> CrsConversion::attributeList() const {
-    return _src->attributeList();
-}
-
 
 bool CrsConversion::gotoNext() {
 

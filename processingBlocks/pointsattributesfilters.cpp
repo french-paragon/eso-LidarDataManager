@@ -28,7 +28,7 @@ PointsAttributesFilters::PointsAttributesFilters(std::unique_ptr<PointCloudPoint
                                                  bool removeColors,
                                                  const std::vector<std::string> &excluded,
                                                  bool removeAll) :
-    _src(std::move(source)),
+    IdentityProcessor(std::move(source)),
     _filtered(excluded.begin(), excluded.end()),
     _filterAll(removeAll),
     _filterColor(removeColors)
@@ -38,10 +38,6 @@ PointsAttributesFilters::PointsAttributesFilters(std::unique_ptr<PointCloudPoint
 
 PointsAttributesFilters::~PointsAttributesFilters() {
 
-}
-
-StereoVision::IO::PtGeometry<StereoVision::IO::PointCloudGenericAttribute> PointsAttributesFilters::getPointPosition() const {
-    return _src->getPointPosition();
 }
 
 std::optional<StereoVision::IO::PtColor<StereoVision::IO::PointCloudGenericAttribute>> PointsAttributesFilters::getPointColor() const {
