@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
     const char* version = "0.1";
 
     std::string inFile;
+    std::string outFile;
 
     std::string inCrs = "";
     std::string outCrs = "";
@@ -45,6 +46,7 @@ int main(int argc, char** argv) {
         TCLAP::CmdLine cmd(message, delimiter, version);
 
         TCLAP::UnlabeledValueArg<std::string> inputFileArg("inFile", "Input file",true,"","path to a point cloud or point cloud-like file");
+        TCLAP::ValueArg<std::string> outputFileArg("o", "output_file_path", "Output file",true,"","path to a point cloud or point cloud-like file");
 
         TCLAP::ValueArg<std::string> inCrsArg("", "incrs", "Override the crs of the input data", false, "", "any string that can be parsed by PROJ, e.g. WTK string or \"EPSG:####\" codes");
         TCLAP::ValueArg<std::string> outCrsArg("", "outcrs", "The crs to use for the output data. If not specified, then no CRS transform is done.", false, "", "any string that can be parsed by PROJ, e.g. WTK string or \"EPSG:####\" codes");
@@ -80,6 +82,7 @@ int main(int argc, char** argv) {
         TCLAP::MultiArg<std::string> removeAttributeArg("", "remove_attribute", "filter out an attribute in the data", false, "string, namming an attribute");
 
         cmd.add(inputFileArg);
+        cmd.add(outputFileArg);
 
         cmd.add(inCrsArg);
         cmd.add(outCrsArg);
@@ -97,6 +100,7 @@ int main(int argc, char** argv) {
         cmd.parse(argc, argv);
 
         inFile = inputFileArg.getValue();
+        outFile = outputFileArg.getValue();
 
         if (inCrsArg.isSet() and outCrsArg.isSet()) {
             std::string inCrs = inCrsArg.getValue();
@@ -255,10 +259,10 @@ int main(int argc, char** argv) {
         std::cerr << "Older LAS version unsupported yet" << std::endl;
         return 1;
     } else if (outFormat == "lasv14") {
-        bool ok = StereoVision::IO::writePointCloudLas(std::cout, pointCloudStack);
+        bool ok = StereoVision::IO::writePointCloudLas(std::filesystem::path(outFile), pointCloudStack);
 
         if (!ok) {
-            std::cerr << "Error writing point cloud data to stdout!" << std::endl;
+            std::cerr << "Error writing point cloud data to " << outFile << "!" << std::endl;
             return 1;
         }
     } else if (outFormat == "pcd-ascii" or outFormat == "pcd-bin") {
@@ -269,10 +273,10 @@ int main(int argc, char** argv) {
             dataStorageType = StereoVision::IO::PcdDataStorageType::binary;
         }
 
-        bool ok = StereoVision::IO::writePointCloudPcd(std::cout, pointCloudStack, dataStorageType);
+        bool ok = StereoVision::IO::writePointCloudPcd(std::filesystem::path(outFile), pointCloudStack, dataStorageType);
 
         if (!ok) {
-            std::cerr << "Error writing point cloud data to stdout!" << std::endl;
+            std::cerr << "Error writing point cloud data to " << outFile << "!" << std::endl;
             return 1;
         }
     }
