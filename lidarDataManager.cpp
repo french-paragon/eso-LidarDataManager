@@ -12,6 +12,7 @@
 #include "processingBlocks/regionofinterestselector.h"
 #include "processingBlocks/attributebasedselector.h"
 #include "processingBlocks/pointsattributesfilters.h"
+#include "processingBlocks/pointsnumberlimit.h"
 #include "processingBlocks/crsconversion.h"
 
 int main(int argc, char** argv) {
@@ -165,7 +166,13 @@ int main(int argc, char** argv) {
     }
 
     if (number > 0) {
-        std::cerr << "Number based filtering not implemented yet, ignoring argument" << std::endl;
+        std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> numberSelector =
+                PointsNumberLimit::setupPointNumberLimit(pointCloudStack.pointAccess,
+                                                                    number);
+
+        if (numberSelector != nullptr) {
+            pointCloudStack.pointAccess = std::move(numberSelector);
+        }
     }
 
     if (returnCap > 0) {

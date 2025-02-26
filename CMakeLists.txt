@@ -38,7 +38,7 @@ pkg_check_modules(PROJ REQUIRED IMPORTED_TARGET proj)
 add_library(PROJ::proj ALIAS PkgConfig::PROJ)
 
 #configure executable
-set(PROJ_SRC main.cpp
+set(DATA_MANAGER_SRC lidarDataManager.cpp
     processingBlocks/aliasheaderattributes.h
     processingBlocks/aliasheaderattributes.cpp
     processingBlocks/identityprocessor.h
@@ -50,10 +50,20 @@ set(PROJ_SRC main.cpp
     processingBlocks/regionofinterestselector.h
     processingBlocks/regionofinterestselector.cpp
     processingBlocks/attributebasedselector.h
-    processingBlocks/attributebasedselector.cpp)
+    processingBlocks/attributebasedselector.cpp
+    processingBlocks/pointsnumberlimit.h
+    processingBlocks/pointsnumberlimit.cpp)
 
 add_executable(lidarDataManager
-    ${PROJ_SRC}
+    ${DATA_MANAGER_SRC}
+)
+
+set(DENSITY_CACHE_SRC densityCacheEstimator.cpp)
+
+add_executable(densityCacheEstimator
+    ${DENSITY_CACHE_SRC}
 )
 
 target_link_libraries(lidarDataManager StereoVision::stevi PROJ::proj)
+
+target_link_libraries(densityCacheEstimator StereoVision::stevi)
