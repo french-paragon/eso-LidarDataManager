@@ -51,6 +51,8 @@ set(DATA_MANAGER_SRC lidarDataManager.cpp
     processingBlocks/regionofinterestselector.cpp
     processingBlocks/attributebasedselector.h
     processingBlocks/attributebasedselector.cpp
+    processingBlocks/attributesetbasedselector.h
+    processingBlocks/attributesetbasedselector.cpp
     processingBlocks/pointsnumberlimit.h
     processingBlocks/pointsnumberlimit.cpp)
 

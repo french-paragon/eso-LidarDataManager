@@ -11,6 +11,7 @@
 #include "processingBlocks/aliasheaderattributes.h"
 #include "processingBlocks/regionofinterestselector.h"
 #include "processingBlocks/attributebasedselector.h"
+#include "processingBlocks/attributesetbasedselector.h"
 #include "processingBlocks/pointsattributesfilters.h"
 #include "processingBlocks/pointsnumberlimit.h"
 #include "processingBlocks/crsconversion.h"
@@ -33,7 +34,7 @@ int main(int argc, char** argv) {
     int number = -1;
 
     int returnCap = -1;
-    int lineIdx = -1;
+    std::vector<int> lineIdxs = {};
 
     std::string outFormat = "";
 
@@ -65,8 +66,11 @@ int main(int argc, char** argv) {
         TCLAP::ValueArg<int> returnCapArg("r", "returns", "The maximal return index to use.",
                                        false, -1, "An int, if below 0 then no limits are imposed");
 
-        TCLAP::ValueArg<int> lineArg("l", "line", "The index of the line to export.",
-                                       false, -1, "An int, if below 0 then no limits are imposed");
+        TCLAP::MultiArg<int> lineArg("l", "line", "The index of a line to export.",
+                                       false, "An int, the index of a line to select");
+
+        TCLAP::MultiArg<std::string> lineRangeArg("", "line_range", "A range of index of lines to export in format start-end (both included)",
+                                       false, "Astring representing a range of ints");
 
         std::vector<std::string> allowedOutFormats;
                 allowedOutFormats.push_back("pcd-ascii");
@@ -91,6 +95,7 @@ int main(int argc, char** argv) {
         cmd.add(numberArg);
         cmd.add(returnCapArg);
         cmd.add(lineArg);
+        cmd.add(lineRangeArg);
         cmd.add(formatArg);
 
         cmd.add(removeColorArg);
@@ -114,7 +119,34 @@ int main(int argc, char** argv) {
         density = densityArg.getValue();
         number = numberArg.getValue();
         returnCap = returnCapArg.getValue();
-        lineIdx = lineArg.getValue();
+        lineIdxs = lineArg.getValue();
+
+        std::vector<std::string> const& linesRanges = lineRangeArg.getValue();
+
+        for (std::string const& str : linesRanges) {
+
+            std::stringstream strstream(str);
+            std::string part;
+
+            try {
+                getline(strstream, part, '-');
+                int l1 = stoi(part);
+                if (strstream.eof()) {
+                    continue;
+                }
+                getline(strstream, part, '-');
+                int l2 = stoi(part);
+
+                int start = std::min(l1,l2);
+                int end = std::max(l1,l2);
+
+                for (int i = start; i <= end; i++) {
+                    lineIdxs.push_back(i);
+                }
+            } catch (std::exception const& e) {
+                throw TCLAP::ArgException("Error parsing argument", lineRangeArg.getName());
+            }
+        }
 
         outFormat = formatArg.getValue();
 
@@ -192,13 +224,13 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (lineIdx >= 0) {
+    if (lineIdxs.size() > 0) {
 
         std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> lineSelector =
-                AttributeBasedSelector::setupAttributeBasedSelector(pointCloudStack.pointAccess,
+                AttributeSetBasedSelector::setupAttributeSetBasedSelector(pointCloudStack.pointAccess,
                                                                     "lineNumber",
-                                                                    AttributeBasedSelector::Equal,
-                                                                    lineIdx);
+                                                                    AttributeSetBasedSelector::InSet,
+                                                                    lineIdxs);
 
         if (lineSelector != nullptr) {
             pointCloudStack.pointAccess = std::move(lineSelector);
