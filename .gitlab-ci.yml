@@ -8,6 +8,7 @@ stages:          # List of stages for jobs, and their order of execution
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
+  image: lidardatamanager-buildenv:latest
   script:
     - echo "Compiling the code..."
     - git submodule init
@@ -22,12 +23,14 @@ build-job:       # This job runs in the build stage, which runs first.
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
+  image: lidardatamanager-buildenv:latest
   script:
     - echo "Running unit tests... "
     - echo "No tests implemented yet"
 
 deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  image: lidardatamanager-buildenv:latest
   environment: production
   script:
     - echo "Deploying application..."
