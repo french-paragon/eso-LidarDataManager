@@ -38,7 +38,7 @@ For usage information, call the tool with the -h flag:
 We do provide a containerized version of the application. To build the corresponding docker container, use the Dockerfile provided. In the root source directory you can run:
 
 ```
-docker build -t lidardatamanager .
+docker build -t lidardatamanager --no-cache .
 ```
 
 Then, to execute the tool, run:
