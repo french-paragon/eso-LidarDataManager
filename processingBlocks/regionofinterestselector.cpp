@@ -52,10 +52,10 @@ std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> RegionOfIntere
         return nullptr;
     }
 
-    Eigen::Vector3d r(x,y,z);
-    Eigen::Vector3d t(rx,ry,rz);
+    Eigen::Vector3d r(rx,ry,rz);
+    Eigen::Vector3d t(x,y,z);
 
-    std::array<double, 3> extents{dx, dy, dz};
+    std::array<double, 3> extents{std::abs(dx), std::abs(dy), std::abs(dz)};
 
     StereoVision::Geometry::RigidBodyTransform<double> rect2world(r,t);
     StereoVision::Geometry::AffineTransform<double> world2rect = rect2world.inverse().toAffineTransform();
@@ -94,9 +94,9 @@ bool RegionOfInterestSelector::gotoNext() {
 
         Eigen::Vector3d transformed = _transform*pos;
 
-        if (transformed.x() >= 0 and transformed.x() <= _extends[0] and
-                transformed.y() >= 0 and transformed.y() <= _extends[1] and
-                transformed.z() >= 0 and transformed.z() <= _extends[2]) {
+        if (std::abs(transformed.x()) <= _extends[0] and
+                std::abs(transformed.y()) <= _extends[1] and
+                std::abs(transformed.z()) <= _extends[2]) {
             nextIsIn = true;
         }
 
