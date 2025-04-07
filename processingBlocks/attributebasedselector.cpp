@@ -34,6 +34,83 @@ public:
         AttributeBasedSelector(std::move(source), attributeName, val)
     {
 
+        bool currentIsValid = std::visit([this] (auto const& param) {
+            return isCurrentAttributeValid(param);
+        }, _comparisonVal);
+
+        if (!currentIsValid) {
+            gotoNext();
+        }
+
+    }
+
+    template<typename T>
+    bool isCurrentAttributeValid(T const& val) {
+
+        std::optional<StereoVision::IO::PointCloudGenericAttribute> attributeOpt =
+                getAttributeByName(_attributeName.c_str());
+
+        if (comparator == Comparator::Different and !attributeOpt.has_value()) {
+            return true;
+        }
+
+        if (!attributeOpt.has_value()) {
+            return false;
+        }
+
+        StereoVision::IO::PointCloudGenericAttribute& attribute = attributeOpt.value();
+
+        using CompT = std::conditional_t<std::is_arithmetic_v<T>, double, std::string>; //ensure the comparison type is a type that can holds all possible alternatives
+
+        CompT attributeVal;
+        CompT comparisonVal;
+
+        if (std::holds_alternative<CompT>(attribute)) {
+            attributeVal = std::get<CompT>(attribute);
+        } else {
+            attributeVal = StereoVision::IO::castedPointCloudAttribute<CompT>(attribute);
+        }
+
+        comparisonVal = ConditionalRef<std::is_arithmetic_v<T> or std::is_same_v<T, std::string>>::val(val,CompT());
+
+        if (comparator == Comparator::Equal) {
+            if (attributeVal == comparisonVal) {
+                return true;
+            }
+        }
+
+        if (comparator == Comparator::Different) {
+            if (attributeVal != comparisonVal) {
+                return true;
+            }
+        }
+
+        if (comparator == Comparator::Greather) {
+            if (attributeVal > comparisonVal) {
+                return true;
+            }
+        }
+
+        if (comparator == Comparator::GreatherOrEqual) {
+            if (attributeVal >= comparisonVal) {
+                return true;
+            }
+        }
+
+        if (comparator == Comparator::Smaller) {
+            if (attributeVal < comparisonVal) {
+                return true;
+            }
+        }
+
+        if (comparator == Comparator::SmallerOrEqual) {
+            if (attributeVal <= comparisonVal) {
+                return true;
+            }
+        }
+
+        return false;
+
     }
 
     template<typename T>
@@ -53,68 +130,7 @@ public:
                 break;
             }
 
-            std::optional<StereoVision::IO::PointCloudGenericAttribute> attributeOpt =
-                    getAttributeByName(_attributeName.c_str());
-
-            if (comparator == Comparator::Different and !attributeOpt.has_value()) {
-                nextIsIn = true;
-                break;
-            }
-
-            if (!attributeOpt.has_value()) {
-                continue;
-            }
-
-            StereoVision::IO::PointCloudGenericAttribute& attribute = attributeOpt.value();
-
-            using CompT = std::conditional_t<std::is_arithmetic_v<T>, double, std::string>; //ensure the comparison type is a type that can holds all possible alternatives
-
-            CompT attributeVal;
-            CompT comparisonVal;
-
-            if (std::holds_alternative<CompT>(attribute)) {
-                attributeVal = std::get<CompT>(attribute);
-            } else {
-                attributeVal = StereoVision::IO::castedPointCloudAttribute<CompT>(attribute);
-            }
-
-            comparisonVal = ConditionalRef<std::is_arithmetic_v<T> or std::is_same_v<T, std::string>>::val(val,CompT());
-
-            if (comparator == Comparator::Equal) {
-                if (attributeVal == comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
-
-            if (comparator == Comparator::Different) {
-                if (attributeVal != comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
-
-            if (comparator == Comparator::Greather) {
-                if (attributeVal > comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
-
-            if (comparator == Comparator::GreatherOrEqual) {
-                if (attributeVal >= comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
-
-            if (comparator == Comparator::Smaller) {
-                if (attributeVal < comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
-
-            if (comparator == Comparator::SmallerOrEqual) {
-                if (attributeVal <= comparisonVal) {
-                    nextIsIn = true;
-                }
-            }
+            nextIsIn = isCurrentAttributeValid(val);
 
         } while (!nextIsIn);
 
@@ -122,7 +138,10 @@ public:
     }
 
     virtual bool gotoNext() override {
-        return std::visit([this] (auto const& param) { return gotoNextImpl(param); }, _comparisonVal);
+        return std::visit([this] (auto const& param) {
+            return gotoNextImpl(param);
+        },
+        _comparisonVal);
     }
 };
 

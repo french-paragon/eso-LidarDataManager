@@ -16,6 +16,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp -march=native -ftree-vectorize")
 
+enable_testing()
+
 #global variables for installation
 
 include(GNUInstallDirs)
@@ -38,7 +40,7 @@ pkg_check_modules(PROJ REQUIRED IMPORTED_TARGET proj)
 add_library(PROJ::proj ALIAS PkgConfig::PROJ)
 
 #configure executable
-set(DATA_MANAGER_SRC lidarDataManager.cpp
+set(PROC_BLOCKS_FILES
     processingBlocks/aliasheaderattributes.h
     processingBlocks/aliasheaderattributes.cpp
     processingBlocks/identityprocessor.h
@@ -56,6 +58,9 @@ set(DATA_MANAGER_SRC lidarDataManager.cpp
     processingBlocks/pointsnumberlimit.h
     processingBlocks/pointsnumberlimit.cpp)
 
+set(DATA_MANAGER_SRC lidarDataManager.cpp
+    ${PROC_BLOCKS_FILES})
+
 add_executable(lidarDataManager
     ${DATA_MANAGER_SRC}
 )
@@ -69,3 +74,7 @@ add_executable(densityCacheEstimator
 target_link_libraries(lidarDataManager StereoVision::stevi PROJ::proj)
 
 target_link_libraries(densityCacheEstimator StereoVision::stevi)
+
+
+add_subdirectory(tests)
+add_subdirectory(benchmarks)

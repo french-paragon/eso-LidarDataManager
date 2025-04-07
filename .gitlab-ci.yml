@@ -26,7 +26,14 @@ unit-test-job:   # This job runs in the test stage.
   image: lidardatamanager-buildenv:latest
   script:
     - echo "Running unit tests... "
-    - echo "No tests implemented yet"
+    - make test-details
+
+benchmark-job:   # This job runs in the test stage.
+  stage: test    # It only starts when the job in the build stage completes successfully.
+  image: lidardatamanager-buildenv:latest
+  script:
+    - echo "Running benchmarks... "
+    - make benchmark
 
 deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
