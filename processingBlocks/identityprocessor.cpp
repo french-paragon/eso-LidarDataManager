@@ -27,3 +27,7 @@ std::vector<std::string> IdentityProcessor::attributeList() const {
 bool IdentityProcessor::gotoNext() {
     return _src->gotoNext();
 }
+
+bool IdentityProcessor::hasData() const {
+    return _src->hasData();
+}
