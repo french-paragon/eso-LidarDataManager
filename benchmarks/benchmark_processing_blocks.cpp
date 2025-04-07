@@ -4,6 +4,7 @@
 #include <StereoVision/io/pcd_pointcloud_io.h>
 
 #include "../processingBlocks/attributebasedselector.h"
+#include "../processingBlocks/crsconversion.h"
 
 #include <random>
 
@@ -265,10 +266,77 @@ static void AttributeSelectorBenchmark(benchmark::State& state) {
     benchmark::DoNotOptimize(rFinal);
 }
 
+static void ConversionEcef2Geo(benchmark::State& state) {
+    // setup
+    constexpr int nPoints = 1024;
+
+    constexpr double earthRadius = 6.3781e6;
+
+    GenericCloud ptCloud = getRandomPointCloud(nPoints);
+
+    for (int i = 0; i < nPoints; i++) {
+
+        double norm = ptCloud[i].xyz.x*ptCloud[i].xyz.x;
+        norm += ptCloud[i].xyz.y*ptCloud[i].xyz.y;
+        norm += ptCloud[i].xyz.z*ptCloud[i].xyz.z;
+
+        norm = std::sqrt(norm);
+
+        double scale = earthRadius/norm;
+
+        ptCloud[i].xyz.x *= scale;
+        ptCloud[i].xyz.y *= scale;
+        ptCloud[i].xyz.z *= scale;
+    }
+
+    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> baseInterface =
+            std::make_unique<GenericCloudInterface>(ptCloud);
+
+    GenericCloudInterface* base = static_cast<GenericCloudInterface*>(baseInterface.get());
+
+    std::string inCrs = "EPSG:4978";
+    std::string outCrs = "EPSG:4979";
+
+    std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> selector =
+            CrsConversion::setupCrsConversion(baseInterface,
+                                              inCrs,
+                                              outCrs);
+
+    int nRead = 0;
+
+    //time loop
+    for (auto _ : state) {
+
+        bool hasMore = true;
+
+        do {
+
+            auto point = selector->castedPointGeometry<float>();
+            auto color = selector->castedPointColor<float>();
+
+            benchmark::DoNotOptimize(point);
+            benchmark::DoNotOptimize(color);
+
+            nRead++;
+
+            hasMore = selector->gotoNext();
+
+        } while (hasMore);
+
+        base->reset(); // reset the generic cloud first, to have more data ready.
+        selector->gotoNext(); //then reset the buffered point cloud.
+    }
+
+    int rFinal = nRead;
+
+    benchmark::DoNotOptimize(rFinal);
+}
+
 BENCHMARK(PcdAsciiWritingBenchmark);
 BENCHMARK(PcdBinaryWritingBenchmark);
 BENCHMARK(PcdAsciiReadingBenchmark);
 BENCHMARK(PcdBinaryReadingBenchmark);
 BENCHMARK(AttributeSelectorBenchmark);
+BENCHMARK(ConversionEcef2Geo);
 
 BENCHMARK_MAIN();
