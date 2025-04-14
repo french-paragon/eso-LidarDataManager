@@ -2,7 +2,9 @@
 
 #include <StereoVision/io/pointcloud_io.h>
 #include <StereoVision/io/pcd_pointcloud_io.h>
+#include <StereoVision/io/las_pointcloud_io.h>
 
+#include "../processingBlocks/identityprocessor.h"
 #include "../processingBlocks/attributebasedselector.h"
 #include "../processingBlocks/crsconversion.h"
 
@@ -109,6 +111,35 @@ static void PcdBinaryWritingBenchmark(benchmark::State& state) {
     }
 }
 
+static void LasWritingBenchmark(benchmark::State& state) {
+
+    // setup
+    constexpr int nPoints = 1024;
+
+    GenericCloud ptCloud = getRandomPointCloud(nPoints);
+
+    StereoVision::IO::FullPointCloudAccessInterface pointCloudStack;
+
+    pointCloudStack.headerAccess = std::make_unique<GenericCloudHeaderInterface>(ptCloud);
+    pointCloudStack.pointAccess = std::make_unique<GenericCloudInterface>(ptCloud);
+
+    GenericCloudInterface* base = static_cast<GenericCloudInterface*>(pointCloudStack.pointAccess.get());
+
+    std::string outFile = "test_las.las";
+
+    //time loop
+    for (auto _ : state) {
+
+        bool hasMore = true;
+        base->reset();
+
+        bool ok = StereoVision::IO::writePointCloudLas(std::filesystem::path(outFile), pointCloudStack);
+
+        benchmark::DoNotOptimize(ok);
+
+    }
+}
+
 static void PcdAsciiReadingBenchmark(benchmark::State& state) {
     // setup
 
@@ -207,6 +238,161 @@ static void PcdBinaryReadingBenchmark(benchmark::State& state) {
 
     benchmark::DoNotOptimize(meanPoint);
     benchmark::DoNotOptimize(meanColor);
+}
+
+static void LasReadingBenchmark(benchmark::State& state) {
+    // setup
+
+    std::string inFile = "test_las.las";
+
+    bool fileReadOk = true;
+
+    std::array<float,3> meanPoint = {0,0,0};
+    std::array<float,4> meanColor = {0,0,0,0};
+
+    //time loop
+    for (auto _ : state) {
+
+        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+                StereoVision::IO::openPointCloud(inFile);
+
+        if (!pointCloudStack.has_value()) {
+            state.SkipWithError("Failed to open file");
+            break;
+        }
+
+        bool hasMore = true;
+
+        do {
+
+            auto point = pointCloudStack->pointAccess->castedPointGeometry<float>();
+
+            meanPoint[0] += point.x;
+            meanPoint[1] += point.y;
+            meanPoint[2] += point.z;
+
+            auto color = pointCloudStack->pointAccess->castedPointColor<float>();
+
+            if (color.has_value()) {
+                meanColor[0] = color->r;
+                meanColor[1] = color->g;
+                meanColor[2] = color->b;
+                meanColor[3] = color->a;
+            }
+
+            hasMore = pointCloudStack->pointAccess->gotoNext();
+
+        } while (hasMore);
+
+    }
+
+    benchmark::DoNotOptimize(meanPoint);
+    benchmark::DoNotOptimize(meanColor);
+}
+
+static void PcdAsciiFullReadWriteBenchmark(benchmark::State& state) {
+
+
+    std::string inFile = "test_pcd_ascii.pcd";
+
+    bool fileReadOk = true;
+
+    std::array<float,3> meanPoint = {0,0,0};
+    std::array<float,4> meanColor = {0,0,0,0};
+
+    std::string outFile = "test_pcd_ascii_copy.pcd";
+
+    //time loop
+    for (auto _ : state) {
+
+        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+                StereoVision::IO::openPointCloud(inFile);
+
+        if (!pointCloudStack.has_value()) {
+            state.SkipWithError("Failed to open file");
+            break;
+        }
+
+        //ensure to disable the optimization where the data is just copied directly when writing to the same type of file.
+        pointCloudStack.value().pointAccess = std::make_unique<IdentityProcessor>(std::move(pointCloudStack.value().pointAccess));
+
+        StereoVision::IO::PcdDataStorageType dataStorageType = StereoVision::IO::PcdDataStorageType::ascii;
+
+        bool ok = StereoVision::IO::writePointCloudPcd(std::filesystem::path(outFile), pointCloudStack.value(), dataStorageType);
+
+        benchmark::DoNotOptimize(ok);
+
+    }
+}
+
+static void PcdBinaryFullReadWriteBenchmark(benchmark::State& state) {
+
+
+    std::string inFile = "test_pcd_bin.pcd";
+
+    bool fileReadOk = true;
+
+    std::array<float,3> meanPoint = {0,0,0};
+    std::array<float,4> meanColor = {0,0,0,0};
+
+    std::string outFile = "test_pcd_bin_copy.pcd";
+
+    //time loop
+    for (auto _ : state) {
+
+        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+                StereoVision::IO::openPointCloud(inFile);
+
+        if (!pointCloudStack.has_value()) {
+            state.SkipWithError("Failed to open file");
+            break;
+        }
+
+        //ensure to disable the optimization where the data is just copied directly when writing to the same type of file.
+        pointCloudStack.value().pointAccess = std::make_unique<IdentityProcessor>(std::move(pointCloudStack.value().pointAccess));
+
+        StereoVision::IO::PcdDataStorageType dataStorageType = StereoVision::IO::PcdDataStorageType::binary;
+
+        bool ok = StereoVision::IO::writePointCloudPcd(std::filesystem::path(outFile), pointCloudStack.value(), dataStorageType);
+
+        benchmark::DoNotOptimize(ok);
+
+    }
+}
+
+static void LasFullReadWriteBenchmark(benchmark::State& state) {
+
+
+    std::string inFile = "test_las.las";
+
+    bool fileReadOk = true;
+
+    std::array<float,3> meanPoint = {0,0,0};
+    std::array<float,4> meanColor = {0,0,0,0};
+
+    std::string outFile = "test_las_copy.las";
+
+    //time loop
+    for (auto _ : state) {
+
+        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+                StereoVision::IO::openPointCloud(inFile);
+
+        if (!pointCloudStack.has_value()) {
+            state.SkipWithError("Failed to open file");
+            break;
+        }
+
+        //ensure to disable the optimization where the data is just copied directly when writing to the same type of file.
+        pointCloudStack.value().pointAccess = std::make_unique<IdentityProcessor>(std::move(pointCloudStack.value().pointAccess));
+
+        StereoVision::IO::PcdDataStorageType dataStorageType = StereoVision::IO::PcdDataStorageType::binary;
+
+        bool ok = StereoVision::IO::writePointCloudPcd(std::filesystem::path(outFile), pointCloudStack.value(), dataStorageType);
+
+        benchmark::DoNotOptimize(ok);
+
+    }
 }
 
 static void AttributeSelectorBenchmark(benchmark::State& state) {
@@ -334,8 +520,13 @@ static void ConversionEcef2Geo(benchmark::State& state) {
 
 BENCHMARK(PcdAsciiWritingBenchmark);
 BENCHMARK(PcdBinaryWritingBenchmark);
+BENCHMARK(LasWritingBenchmark);
 BENCHMARK(PcdAsciiReadingBenchmark);
 BENCHMARK(PcdBinaryReadingBenchmark);
+BENCHMARK(LasReadingBenchmark);
+BENCHMARK(PcdAsciiFullReadWriteBenchmark);
+BENCHMARK(PcdBinaryFullReadWriteBenchmark);
+BENCHMARK(LasFullReadWriteBenchmark);
 BENCHMARK(AttributeSelectorBenchmark);
 BENCHMARK(ConversionEcef2Geo);
 
