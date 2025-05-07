@@ -5,6 +5,8 @@ RUN bash setup_script.bash
 
 COPY CMakeLists.txt *.cpp *.h /
 COPY processingBlocks /processingBlocks
+COPY tests /tests
+COPY benchmarks /benchmarks
 
 RUN cmake -DCMAKE_BUILD_TYPE=Release .; make
 
