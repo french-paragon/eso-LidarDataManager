@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <chrono>
 
 #include <tclap/CmdLine.h>
 
@@ -42,6 +43,8 @@ int main(int argc, char** argv) {
     bool removeAllAttributes = false;
     std::vector<std::string> attributes2filter;
 
+    bool benchmarkProcessing = false;
+
     try {
 
         TCLAP::CmdLine cmd(message, delimiter, version);
@@ -67,7 +70,9 @@ int main(int argc, char** argv) {
                                        false, -1, "An int, if below 0 then no limits are imposed");
 
         TCLAP::MultiArg<int> lineArg("l", "line", "The index of a line to export.",
-                                       false, "An int, the index of a line to select");
+                                     false, "An int, the index of a line to select");
+
+        TCLAP::SwitchArg benchmarkArg("b", "benchmark", "Time the export and print statistics at the end.");
 
         TCLAP::MultiArg<std::string> lineRangeArg("", "line_range", "A range of index of lines to export in format start-end (both included)",
                                        false, "Astring representing a range of ints");
@@ -97,6 +102,7 @@ int main(int argc, char** argv) {
         cmd.add(lineArg);
         cmd.add(lineRangeArg);
         cmd.add(formatArg);
+        cmd.add(benchmarkArg);
 
         cmd.add(removeColorArg);
         cmd.add(removeAllAttributesArg);
@@ -120,6 +126,8 @@ int main(int argc, char** argv) {
         number = numberArg.getValue();
         returnCap = returnCapArg.getValue();
         lineIdxs = lineArg.getValue();
+
+        benchmarkProcessing = benchmarkArg.isSet();
 
         std::vector<std::string> const& linesRanges = lineRangeArg.getValue();
 
@@ -287,6 +295,8 @@ int main(int argc, char** argv) {
 
     //write file
 
+    std::chrono::time_point start = std::chrono::high_resolution_clock::now();
+
     if (outFormat == "lasv13" or outFormat == "lasv12") {
         std::cerr << "Older LAS version unsupported yet" << std::endl;
         return 1;
@@ -313,6 +323,12 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::chrono::time_point end = std::chrono::high_resolution_clock::now();
+
+    if (benchmarkProcessing) {
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cerr << "Processed the point cloud in " << (time.count()/1000.) << " seconds!" << std::endl;
+    }
 
     return 0;
 
