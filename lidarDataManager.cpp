@@ -34,6 +34,8 @@
 #include "processingBlocks/pointsnumberlimit.h"
 #include "processingBlocks/crsconversion.h"
 
+#include <thread>
+
 int main(int argc, char** argv) {
 
     const char* message = "Processed lidar data on the fly";
@@ -202,6 +204,17 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    //prepare points counting
+
+
+    constexpr int maxNumberOfStepWrite = 1000;
+
+    int expectedNumberOfPoints = pointCloudStack.expectedNumberOfPoints();
+
+    int nProcessedPoints = pointCloudStack.pointAccess->processedNumberOfPoints();
+
+    StereoVision::IO::PointCloudPointAccessInterface* initialPointCloudReader = pointCloudStack.pointAccess.get();
+
     //process stack
 
     //do the filtering first (so that the points are removed)
@@ -314,6 +327,26 @@ int main(int argc, char** argv) {
 
     std::chrono::time_point start = std::chrono::high_resolution_clock::now();
 
+    bool progressWriterContinue = true;
+    auto progressWriter = [expectedNumberOfPoints, nProcessedPoints, initialPointCloudReader, &progressWriterContinue] () {
+
+        using namespace std::chrono_literals;
+
+        if (nProcessedPoints < 0) {
+            return;
+        }
+
+        while (progressWriterContinue) {
+            std::cout << "\r" << "Processed " << initialPointCloudReader->processedNumberOfPoints() << "/" << expectedNumberOfPoints;
+            std::cout.flush();
+            std::this_thread::sleep_for(100ms);
+        }
+
+        std::cout << "\r" << "Processed " << expectedNumberOfPoints << "/" << expectedNumberOfPoints << " " << std::endl;
+    };
+
+    std::thread progressWritingThread(progressWriter);
+
     if (outFormat == "lasv13" or outFormat == "lasv12") {
         std::cerr << "Older LAS version unsupported yet" << std::endl;
         return 1;
@@ -341,6 +374,9 @@ int main(int argc, char** argv) {
     }
 
     std::chrono::time_point end = std::chrono::high_resolution_clock::now();
+
+    progressWriterContinue = false;
+    progressWritingThread.join();
 
     if (benchmarkProcessing) {
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
