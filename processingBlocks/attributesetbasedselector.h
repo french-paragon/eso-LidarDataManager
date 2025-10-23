@@ -86,10 +86,6 @@ public:
 
     }
 
-    template<typename T>
-    bool isAlikeImpl(T const& val, AttrT const& comp) {
-    }
-
     virtual bool gotoNext() override {
 
         bool nextIsIn = false;
