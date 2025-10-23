@@ -22,6 +22,8 @@ enable_testing()
 
 include(GNUInstallDirs)
 
+include(FetchContent)
+
 set(CMAKE_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR})
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME})
@@ -32,8 +34,22 @@ set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 find_package(Eigen3 3.3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-find_package(MultidimArrays REQUIRED)
-find_package(StereoVision REQUIRED)
+FetchContent_Declare(
+  MultidimArrays
+  GIT_REPOSITORY https://github.com/french-paragon/MultidimArrays.git
+  GIT_TAG 6b816b3b0ab8f1a484cfa695daa9f64f11ea2348
+  FIND_PACKAGE_ARGS
+)
+FetchContent_MakeAvailable(MultidimArrays)
+
+FetchContent_Declare(
+  StereoVision
+  GIT_REPOSITORY https://github.com/french-paragon/LibStevi.git
+  GIT_TAG 8175f3a85d28b12033ca0717891e58cf310f6539
+  FIND_PACKAGE_ARGS
+)
+option(buildGui OFF) #ensuire gui is not built for the fetched stereo vision library
+FetchContent_MakeAvailable(StereoVision)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PROJ REQUIRED IMPORTED_TARGET proj)

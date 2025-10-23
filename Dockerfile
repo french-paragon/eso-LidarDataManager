@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 COPY docker/setup_script.bash /
 RUN bash setup_script.bash
