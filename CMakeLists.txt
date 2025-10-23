@@ -32,6 +32,7 @@ set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 find_package(Eigen3 3.3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+find_package(MultidimArrays REQUIRED)
 find_package(StereoVision REQUIRED)
 
 find_package(PkgConfig REQUIRED)
