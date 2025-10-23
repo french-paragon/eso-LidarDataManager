@@ -170,7 +170,7 @@ static void PcdAsciiReadingBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {
@@ -220,7 +220,7 @@ static void PcdBinaryReadingBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {
@@ -270,7 +270,7 @@ static void LasReadingBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {
@@ -322,7 +322,7 @@ static void PcdAsciiFullReadWriteBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {
@@ -357,7 +357,7 @@ static void PcdBinaryFullReadWriteBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {
@@ -392,7 +392,7 @@ static void LasFullReadWriteBenchmark(benchmark::State& state) {
     //time loop
     for (auto _ : state) {
 
-        std::optional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
+        StatusOptional<StereoVision::IO::FullPointCloudAccessInterface> pointCloudStack =
                 StereoVision::IO::openPointCloud(inFile);
 
         if (!pointCloudStack.has_value()) {

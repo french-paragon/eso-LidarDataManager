@@ -193,14 +193,14 @@ int main(int argc, char** argv) {
     auto pointCloudStackOpt = StereoVision::IO::openPointCloud(inFile);
 
     if (!pointCloudStackOpt.has_value()) {
-        std::cerr << "Could not open file: " << inFile << "! Aborting!" << std::endl;
+        std::cerr << "Could not open file: \"" << inFile << "\"! \n\t error message is: \"" << pointCloudStackOpt.message() << "\" \n\tAborting!" << std::endl;
         return 1;
     }
 
     StereoVision::IO::FullPointCloudAccessInterface& pointCloudStack = pointCloudStackOpt.value();
 
     if (pointCloudStack.headerAccess == nullptr and pointCloudStack.pointAccess == nullptr) {
-        std::cerr << "Error reading file: " << inFile << ", null accesss interfaces! Aborting!" << std::endl;
+        std::cerr << "Error reading file: \"" << inFile << "\", null accesss interfaces! Aborting!" << std::endl;
         return 1;
     }
 

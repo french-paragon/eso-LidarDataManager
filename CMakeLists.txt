@@ -41,7 +41,7 @@ FetchContent_MakeAvailable(MultidimArrays)
 FetchContent_Declare(
   StereoVision
   GIT_REPOSITORY https://github.com/french-paragon/LibStevi.git
-  GIT_TAG 8175f3a85d28b12033ca0717891e58cf310f6539
+  GIT_TAG 33254ce24cd44a3fb6165d12de01a9fcfd39a2d4
   FIND_PACKAGE_ARGS
 )
 option(buildGui OFF) #ensuire gui is not built for the fetched stereo vision library
