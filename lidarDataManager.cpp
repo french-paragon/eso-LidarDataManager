@@ -240,9 +240,18 @@ int main(int argc, char** argv) {
     }
 
     if (number > 0) {
+
+        long step = 1;
+
+        if (expectedNumberOfPoints >= 0) {
+            step = std::max<long>(1, std::floor(expectedNumberOfPoints/number));
+        }
+
         std::unique_ptr<StereoVision::IO::PointCloudPointAccessInterface> numberSelector =
-                PointsNumberLimit::setupPointNumberLimit(pointCloudStack.pointAccess,
-                                                                    number);
+                PointsNumberLimit::setupPointNumberLimit(
+                    pointCloudStack.pointAccess,
+                    number,
+                    step);
 
         if (numberSelector != nullptr) {
             pointCloudStack.pointAccess = std::move(numberSelector);
