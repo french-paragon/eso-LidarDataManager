@@ -8,6 +8,6 @@ COPY processingBlocks /processingBlocks
 COPY tests /tests
 COPY benchmarks /benchmarks
 
-RUN cmake -DCMAKE_BUILD_TYPE=Release .; make
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DbuildForContainer=ON .; make
 
 ENTRYPOINT ["./lidarDataManager"]

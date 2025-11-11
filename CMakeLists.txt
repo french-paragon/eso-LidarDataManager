@@ -3,6 +3,8 @@ cmake_policy(SET CMP0095 NEW)
 
 project(LidarDataManager LANGUAGES CXX)
 
+option(buildForContainer OFF)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -88,6 +90,10 @@ target_link_libraries(lidarDataManager StereoVision::stevi PROJ::proj)
 
 target_link_libraries(densityCacheEstimator StereoVision::stevi)
 
+
+if (buildForContainer)
+    target_compile_definitions(lidarDataManager PUBLIC CONTAINER_EXTRAS)
+endif(buildForContainer)
 
 add_subdirectory(tests)
 add_subdirectory(benchmarks)

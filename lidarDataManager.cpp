@@ -345,13 +345,20 @@ int main(int argc, char** argv) {
             return;
         }
 
+
+        #ifdef CONTAINER_EXTRAS
+        const char lineStartSymbol = '\n';
+        #else
+        const char lineStartSymbol = '\r';
+        #endif
+
         while (progressWriterContinue) {
-            std::cout << "\r" << "Processed " << initialPointCloudReader->processedNumberOfPoints() << "/" << expectedNumberOfPoints;
+            std::cout << lineStartSymbol << "Processed " << initialPointCloudReader->processedNumberOfPoints() << "/" << expectedNumberOfPoints;
             std::cout.flush();
             std::this_thread::sleep_for(100ms);
         }
 
-        std::cout << "\r" << "Processed " << expectedNumberOfPoints << "/" << expectedNumberOfPoints << " " << std::endl;
+        std::cout << lineStartSymbol << "Processed " << expectedNumberOfPoints << "/" << expectedNumberOfPoints << " " << std::endl;
     };
 
     std::thread progressWritingThread(progressWriter);
